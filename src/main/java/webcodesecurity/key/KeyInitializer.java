@@ -33,7 +33,7 @@ public class KeyInitializer {
                 return;
             }
 
-            KeyPair keyPair = KeyPairManager.generateKeyPair("RSA", 1024);
+            KeyPair keyPair = KeyPairManager.generateKeyPair("RSA", 2048);
             if (keyPair == null) {
                 throw new IllegalStateException("KeyPair 생성 실패");
             }

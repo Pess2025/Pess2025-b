@@ -11,7 +11,7 @@ public class LoadMain {
         System.out.println("공개키를 저장한 파일 이름: ");
         String publicKeyFileName = sc.next();
 
-        Key publicKey = SecretKeyLoader.loadKey(publicKeyFileName, 1024); // 문제에서 고정.
+        Key publicKey = SecretKeyLoader.loadKey(publicKeyFileName, 2048); // 문제에서 고정.
 
         System.out.println("암호화 알고리즘:" + publicKey.getAlgorithm());
         System.out.println("복구된 공개키 정보: ");
