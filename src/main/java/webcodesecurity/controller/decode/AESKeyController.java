@@ -8,21 +8,20 @@ import webcodesecurity.controller.decode.holder.AESKeyHolder;
 
 import javax.crypto.SecretKey;
 import java.io.File;
+import java.security.PrivateKey;
 
 @RestController
 @RequestMapping("/key")
-public class KeyController { //비밀키로 대칭키 복호화
+public class AESKeyController { //비밀키로 대칭키 복호화
 
-    @PostMapping("/upload-private")
-    public ResponseEntity<String> uploadPrivateKey(@RequestParam("privateKey") MultipartFile privateKey,
-                                                   @RequestParam("envelope") MultipartFile envelope) {
+    @PostMapping("/decode/upload")
+    public ResponseEntity<String> uploadPrivateKey(@RequestParam("privateKey") MultipartFile privateKey) {
         try {
-            File keyFile = new File("uploads/private.key");
-            File envelopeFile = new File("uploads/envelope.dat");
-            privateKey.transferTo(keyFile);
-            envelope.transferTo(envelopeFile);
+            String envelopePath = System.getProperty("user.dir") + "/src/main/java/webcodesecurity/output/envelope.key";
+            File envelopeFile = new File(envelopePath);
 
-            SecretKey aesKey = new EnvelopeDecode().getAESKeyFromEnvelope(keyFile, envelopeFile);
+            //privateKey 서버에 저장 하지 않고 메모리에 있는 것을 사용하기 위해 inputStream만 전달
+            SecretKey aesKey = new EnvelopeDecode().getAESKeyFromEnvelope(privateKey.getInputStream(), envelopeFile);
             AESKeyHolder.getInstance().setAESKey(aesKey);
             return ResponseEntity.ok("대칭키 획득 성공");
 

@@ -1,9 +1,6 @@
 package webcodesecurity.decode;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.security.PrivateKey;
 import java.util.Scanner;
@@ -14,13 +11,12 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class EnvelopeDecode { //사용자에게 업로드 받은 비밀키로 암호화 된 대칭키를 복호화, 대칭키 획득
 
-    public SecretKey getAESKeyFromEnvelope(File privateKeyFile, File envelopeKeyFile) throws Exception {
+    public SecretKey getAESKeyFromEnvelope(InputStream p_input, File envelopeKeyFile) throws Exception {
 		
 		//개인키 파일 업로드
-		ObjectInputStream o_private = new ObjectInputStream(new FileInputStream(privateKeyFile));
+		ObjectInputStream o_private = new ObjectInputStream(p_input);
 		PrivateKey privateKey = (PrivateKey)o_private.readObject();
 		o_private.close();
-
 
         // 대칭키 복호화용 Cipher 초기화
         Cipher cipher = Cipher.getInstance("RSA");
