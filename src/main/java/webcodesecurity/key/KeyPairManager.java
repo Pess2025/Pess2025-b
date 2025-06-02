@@ -2,7 +2,7 @@
  * 웹코드보안 기말프로젝트 08팀 KeyPairManager.java
  * 1. key pair 생성 class입니다.
  * */
-package webcodesecurity.encode;
+package webcodesecurity.key;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;

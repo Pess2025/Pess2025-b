@@ -1,4 +1,4 @@
-package webcodesecurity.encode;
+package webcodesecurity.key;
 
 import java.security.Key;
 import java.util.Scanner;

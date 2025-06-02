@@ -1,5 +1,11 @@
-package webcodesecurity.encode;
+package webcodesecurity.key;
 
+import webcodesecurity.encrypt.EnvelopeGenerator;
+import webcodesecurity.encrypt.FileEncrypter;
+import webcodesecurity.encrypt.SecretKeyGenerator;
+
+import javax.crypto.SecretKey;
+import java.io.File;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -7,7 +13,7 @@ import java.util.Scanner;
 
 public class SaveMain {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
 
         // 키 생성. KeyPairManager class에 있는 함수 호출
@@ -47,8 +53,20 @@ public class SaveMain {
         SecretKeySaver.writeToFile(publicFileName, publicKey);
         SecretKeySaver.writeToFile(privateFileName, privateKey);
 
-        System.out.println("성공적으로 저장되었습니다.");
-        sc.close();
+        System.out.println("RSA 키쌍이 저장되었습니다.");
+
+
+        // AES 대칭키 생성
+        SecretKey aesKey = SecretKeyGenerator.generateAESKey(256);
+        System.out.println("AES 대칭키 생성 완료");
+
+        // 5. 전자봉투 생성 (대칭키 → 공개키로 암호화 → encrypted-key.sig)
+        EnvelopeGenerator.createEnvelopeFile(aesKey, publicFileName, "output/encrypted-key.sig");
+        System.out.println("전자봉투(encrypted-key.sig) 생성 완료");
+
+        // 6. 공개키를 대칭키로 암호화 → encrypted-public.pem
+        FileEncrypter.encryptBytes(publicKey.getEncoded(), new File("output/encrypted-public.pem"));
+        System.out.println("암호화된 공개키(encrypted-public.pem) 생성 완료");
     }
 
 }
