@@ -3,7 +3,7 @@
  * 키를 파일로 저장하는 코드입니다.
  * */
 
-package webcodesecurity.encode;
+package webcodesecurity.key;
 
 import java.io.FileOutputStream;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package webcodesecurity.encode;
+package webcodesecurity.key;
 
 import java.io.FileInputStream;
 import java.io.IOException;
