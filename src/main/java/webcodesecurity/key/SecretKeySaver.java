@@ -8,8 +8,11 @@ package webcodesecurity.key;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -32,11 +35,16 @@ public class SecretKeySaver {
             return null;
         }
     }
-    public static boolean writeToFile(String filename, Key key) {
-        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))){
-            oos.writeObject(key);
+    public static boolean writeToFileAsPem(String filename, Key key) {
+        try {
+            byte[] encoded = key.getEncoded();
+
+            String base64 = Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(encoded);
+            String pem = "-----BEGIN PUBLIC KEY-----\n" + base64 + "\n-----END PUBLIC KEY-----";
+
+            Files.writeString(Paths.get(filename), pem);
             return true;
-        }catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return false;
         }

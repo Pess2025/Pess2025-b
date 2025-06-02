@@ -2,6 +2,7 @@ package webcodesecurity.controller.encode;
 
 import jakarta.annotation.Resource;
 import org.springframework.core.io.InputStreamResource;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +15,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.Signature;
 
 @RestController
@@ -50,20 +50,14 @@ public class EncryptController {
     @PostMapping("/sign")
     public ResponseEntity<String> generateSignature() {
         try {
-            System.out.println("🚀 /sign 진입");
-
             File keyFile = new File("output/aes_key_encrypted.bin");
             if (!keyFile.exists()) {
-                System.err.println("❌ 암호화된 AES 키 없음");
                 return ResponseEntity.status(500).body("암호화된 AES 키 없음");
             }
 
-            System.out.println("🔑 개인키 로딩...");
             PrivateKey privateKey = (PrivateKey) SecretKeyLoader.loadKey("keys/private.key", 1024);
-            System.out.println("✅ 개인키 로딩 완료");
 
             byte[] encryptedKeyBytes = Files.readAllBytes(keyFile.toPath());
-            System.out.println("📦 암호화된 AES 키 로딩 완료");
 
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
@@ -151,38 +145,25 @@ public class EncryptController {
         zos.closeEntry();
     }
 
-
-    /*클라이언트에서 AES키를 서버 공개키로 암호화해야한다.
-    * */
-    @GetMapping("/public-key")
-    public ResponseEntity<String> getPublicKey() {
-        try {
-            File publicKeyFile = new File(System.getProperty("user.dir") + "/keys/public.key");
-            if (!publicKeyFile.exists()) {
-                return ResponseEntity.status(404).body("공개키 파일이 존재하지 않습니다.");
-            }
-
-            byte[] bytes = java.nio.file.Files.readAllBytes(publicKeyFile.toPath());
-            String encoded = java.util.Base64.getEncoder().encodeToString(bytes);  // ✅ 안전하게 문자열로 변환
-            return ResponseEntity.ok(encoded);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("공개키 읽기 실패: " + e.getMessage());
-        }
-    }
-
     @PostMapping("/save-hash")
     public ResponseEntity<String> saveHash(@RequestParam("hashFile") MultipartFile hashFile) {
         try {
-            String uploadPath = System.getProperty("user.dir") + File.separator + "output";
-            File outputDir = new File(uploadPath);
-            if (!outputDir.exists()) outputDir.mkdirs();
+            // 지정된 경로로 직접 설정
+            String outputPath = System.getProperty("user.dir") + File.separator + "output";
+            File outputDir = new File(outputPath);
+            if (!outputDir.exists() && !outputDir.mkdirs()) {
+                return ResponseEntity.status(500).body("디렉토리 생성 실패: " + outputPath);
+            }
 
-            File hashFilePath = new File(uploadPath, "hashed_password.txt");
-            hashFile.transferTo(hashFilePath);
+            // 원하는 파일명으로 저장
+            File hashFilePath = new File(outputDir, "password_hash.txt");
 
-            return ResponseEntity.ok("해시 파일 저장 완료");
+            // transferTo() 대신 안전한 방식으로 저장
+            try (OutputStream os = new FileOutputStream(hashFilePath)) {
+                os.write(hashFile.getBytes());
+            }
+
+            return ResponseEntity.ok("해시 파일 저장 완료: " + hashFilePath.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("해시 파일 저장 실패: " + e.getMessage());
