@@ -34,6 +34,7 @@ public class KeyInitializer {
             }
 
             KeyPair keyPair = KeyPairManager.generateKeyPair("RSA", 2048);
+            System.out.println("📏 공개키 바이트 길이: " + keyPair.getPublic().getEncoded().length);
             if (keyPair == null) {
                 throw new IllegalStateException("KeyPair 생성 실패");
             }

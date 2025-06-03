@@ -31,13 +31,23 @@ public class EncryptController {
             @RequestParam("encryptedAesKey") MultipartFile encryptedAesKey
     ) {
         try {
-            File outputDir = new File("output");
+            // 현재 클래스 기준 상대경로 → 절대경로로 설정
+            String basePath = new File(".").getCanonicalPath(); // = 프로젝트 루트
+            File outputDir = new File(basePath, "output");
+
             if (!outputDir.exists()) outputDir.mkdirs();
 
-            encryptedText.transferTo(new File("output/password.enc"));
-            encryptedAesKey.transferTo(new File("output/aes_key_encrypted.bin"));
+            File encryptedFile = new File(outputDir, "password.enc");
+            File aesKeyFile = new File(outputDir, "aes_key_encrypted.bin");
+
+            encryptedText.transferTo(encryptedFile);
+            encryptedAesKey.transferTo(aesKeyFile);
+
+            System.out.println("📁 암호문 저장 위치: " + encryptedFile.getAbsolutePath());
+            System.out.println("📁 AES 키 저장 위치: " + aesKeyFile.getAbsolutePath());
 
             return ResponseEntity.ok("AES 암호문 및 키 저장 완료");
+
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("파일 저장 실패: " + e.getMessage());
@@ -46,7 +56,8 @@ public class EncryptController {
 
     /**
      * 저장된 AES 키에 대해 전자서명을 생성
-     */
+    */
+
     @PostMapping("/sign")
     public ResponseEntity<String> generateSignature() {
         try {
@@ -55,21 +66,20 @@ public class EncryptController {
                 return ResponseEntity.status(500).body("암호화된 AES 키 없음");
             }
 
-            PrivateKey privateKey = (PrivateKey) SecretKeyLoader.loadKey("keys/private.key", 1024);
+            // 개인키 로드
+            PrivateKey privateKey = (PrivateKey) SecretKeyLoader.loadKey("keys/private.key", 2048);
 
+            // 암호화된 AES 키 파일 읽기 (그 자체에 서명할 것!)
             byte[] encryptedKeyBytes = Files.readAllBytes(keyFile.toPath());
 
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-            cipher.init(Cipher.DECRYPT_MODE, privateKey);
-            byte[] decryptedAesKey = cipher.doFinal(encryptedKeyBytes);
-            System.out.println("🔓 AES 키 복호화 성공");
-
+            // 전자서명 생성
             Signature signature = Signature.getInstance("SHA256withRSA");
             signature.initSign(privateKey);
-            signature.update(decryptedAesKey);
+            signature.update(encryptedKeyBytes);  // 🔄 복호화 없이, 암호화된 키 자체를 서명
             byte[] sigBytes = signature.sign();
             System.out.println("✍ 서명 완료");
 
+            // 파일로 저장
             Files.write(Paths.get("output/envelope.sig"), sigBytes);
             System.out.println("✔ envelope.sig 생성 완료");
 
@@ -148,17 +158,19 @@ public class EncryptController {
     @PostMapping("/save-hash")
     public ResponseEntity<String> saveHash(@RequestParam("hashFile") MultipartFile hashFile) {
         try {
-            // 지정된 경로로 직접 설정
+            if (hashFile == null || hashFile.isEmpty()) {
+                return ResponseEntity.badRequest().body("📛 업로드된 파일이 null 또는 비어 있음");
+            }
+
             String outputPath = System.getProperty("user.dir") + File.separator + "output";
+            System.out.println("📂 outputPath: " + outputPath);
+
             File outputDir = new File(outputPath);
             if (!outputDir.exists() && !outputDir.mkdirs()) {
                 return ResponseEntity.status(500).body("디렉토리 생성 실패: " + outputPath);
             }
 
-            // 원하는 파일명으로 저장
             File hashFilePath = new File(outputDir, "password_hash.txt");
-
-            // transferTo() 대신 안전한 방식으로 저장
             try (OutputStream os = new FileOutputStream(hashFilePath)) {
                 os.write(hashFile.getBytes());
             }
@@ -166,7 +178,7 @@ public class EncryptController {
             return ResponseEntity.ok("해시 파일 저장 완료: " + hashFilePath.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("해시 파일 저장 실패: " + e.getMessage());
+            return ResponseEntity.status(500).body("❌ 예외 발생: " + e.getMessage());
         }
     }
 

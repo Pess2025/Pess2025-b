@@ -8,11 +8,11 @@ import javax.crypto.SecretKey;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.Key;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.Base64;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Scanner;
 
 public class SaveMain {
@@ -31,43 +31,32 @@ public class SaveMain {
         System.out.println("📌 개인키 알고리즘: " + privateKey.getAlgorithm());
 
         // 3. 저장 경로 입력
-        System.out.print("공개키 PEM 저장 경로 (예: output/public.pem): ");
-        String publicPemFile = sc.nextLine().trim();
         System.out.print("공개키 BIN 저장 경로 (예: output/public.key.bin): ");
         String publicBinFile = sc.nextLine().trim();
         System.out.print("개인키 BIN 저장 경로 (예: output/private.key.bin): ");
         String privateBinFile = sc.nextLine().trim();
 
-        // 4. PEM 저장
-        savePublicKeyAsPem(publicPemFile, publicKey);
-
-        // 5. byte[] 바이너리 저장
+        // 4. byte[] 바이너리 저장
         Files.write(Paths.get(publicBinFile), publicKey.getEncoded());
         Files.write(Paths.get(privateBinFile), privateKey.getEncoded());
+        System.out.println("✅ BIN 키 파일 저장 완료");
 
-        System.out.println("✅ PEM 및 BIN 키 파일 저장 완료");
-
-        // 6. AES 키 생성
+        // 5. AES 키 생성
         SecretKey aesKey = SecretKeyGenerator.generateAESKey(256);
         System.out.println("✅ AES 대칭키 생성 완료");
 
-        // 7. 전자봉투 생성 (AES 대칭키를 RSA 공개키로 암호화)
-        EnvelopeGenerator.createEnvelopeFile(aesKey, publicPemFile, "output/encrypted-key.sig");
+        // 6. BIN 공개키 로드 → PublicKey 객체 생성
+        byte[] pubKeyBytes = Files.readAllBytes(Paths.get(publicBinFile));
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(pubKeyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PublicKey loadedPublicKey = keyFactory.generatePublic(keySpec);
+
+        // 7. 전자봉투 생성
+        EnvelopeGenerator.createEnvelopeFile(aesKey, String.valueOf(loadedPublicKey), "output/encrypted-key.sig");
         System.out.println("✅ 전자봉투(encrypted-key.sig) 생성 완료");
 
-        // 8. 공개키 바이트를 대칭키로 암호화 → 저장
-        FileEncrypter.encryptBytes(publicKey.getEncoded(), new File("output/encrypted-public.pem"));
-        System.out.println("✅ 공개키 암호화(encrypted-public.pem) 저장 완료");
-    }
-
-    // 공개키를 PEM으로 저장
-    private static void savePublicKeyAsPem(String filePath, PublicKey publicKey) throws Exception {
-        byte[] encoded = publicKey.getEncoded(); // X.509 (SPKI)
-        String base64 = Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(encoded);
-
-        String pem = "-----BEGIN PUBLIC KEY-----\n" + base64 + "\n-----END PUBLIC KEY-----";
-        Files.writeString(Paths.get(filePath), pem);
-
-        System.out.println("✅ 공개키 PEM 저장 완료: " + filePath);
+        // 8. 공개키를 AES 키로 암호화하여 저장
+        FileEncrypter.encryptBytes(pubKeyBytes, new File("output/encrypted-public.key"));
+        System.out.println("✅ 공개키 암호화(encrypted-public.key) 저장 완료");
     }
 }
