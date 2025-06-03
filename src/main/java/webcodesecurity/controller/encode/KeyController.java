@@ -145,7 +145,7 @@ public class KeyController {
             String rootPath = System.getProperty("user.dir");
             System.out.println("[DEBUG] 현재 실행 경로: " + rootPath);
 
-            Path keyPath = Paths.get(rootPath, "output", "public.key");
+            Path keyPath = Paths.get(rootPath, "output/public.key");
             System.out.println("[DEBUG] 공개키 예상 경로: " + keyPath.toAbsolutePath());
 
             if (!Files.exists(keyPath)) {

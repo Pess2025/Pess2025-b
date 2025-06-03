@@ -1,8 +1,13 @@
 package webcodesecurity.decode;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyFactory;
 import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Scanner;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
@@ -11,7 +16,38 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class EnvelopeDecode { //사용자에게 업로드 받은 비밀키로 암호화 된 대칭키를 복호화, 대칭키 획득
 
-    public SecretKey getAESKeyFromEnvelope(InputStream p_input, File envelopeKeyFile) throws Exception {
+
+    public SecretKey getAESKeyFromEnvelope(MultipartFile privateKeyFile, File envelopeKeyFile) throws Exception {
+        // 1. 개인키 바이너리 읽기 (PKCS#8 형식)
+        byte[] privateKeyBytes = privateKeyFile.getBytes();
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
+
+        System.out.println("[DEBUG] 개인키 디코딩 완료");
+
+        // 2. 암호화된 AES 키 파일 읽기
+        byte[] encryptedKeyBytes = Files.readAllBytes(envelopeKeyFile.toPath());
+        System.out.println("[DEBUG] 암호화된 AES 키 파일 읽기 완료. 길이: " + encryptedKeyBytes.length);
+
+        // 3. RSA 복호화
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        byte[] aesKeyBytes = cipher.doFinal(encryptedKeyBytes);
+        System.out.println("[DEBUG] RSA 복호화 완료. AES 키 길이: " + aesKeyBytes.length);
+
+        if (aesKeyBytes.length != 32) {
+            throw new IOException("AES 키 길이가 32바이트가 아님: " + aesKeyBytes.length);
+        }
+
+        //원래 있던 private.key 바이트로 저장 된거니까 직렬화로 저장 되게 변경
+        //원래 있던 envelopeKeyFile도 바이트로 저장 된거라 직렬화로 저장 되게 변경
+
+        return new SecretKeySpec(aesKeyBytes, "AES");
+    }
+
+/*
+    public SecretKey getAESKeyFromEnvelope2(InputStream p_input, File envelopeKeyFile) throws Exception {
 		
 		//개인키 파일 업로드
 		ObjectInputStream o_private = new ObjectInputStream(p_input);
@@ -21,6 +57,7 @@ public class EnvelopeDecode { //사용자에게 업로드 받은 비밀키로 �
         // 대칭키 복호화용 Cipher 초기화
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
+
 
         //FileInputStream으로 암호화 된 대칭키 읽어서 CipherInputStream으로 복호화
         byte[] keyBytes = new byte[32]; // 대칭키(AES) 길이가 256비트(32byte)
@@ -37,5 +74,5 @@ public class EnvelopeDecode { //사용자에게 업로드 받은 비밀키로 �
 
         return secretKey;
 	}
-
+*/
 }

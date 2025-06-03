@@ -11,17 +11,17 @@ import java.io.File;
 import java.security.PrivateKey;
 
 @RestController
-@RequestMapping("/key")
+@RequestMapping("/api/keys")
 public class AESKeyController { //비밀키로 대칭키 복호화
 
     @PostMapping("/decode/upload")
     public ResponseEntity<String> uploadPrivateKey(@RequestParam("privateKey") MultipartFile privateKey) {
         try {
-            String envelopePath = System.getProperty("user.dir") + "/output/envelope.key";
+            String envelopePath = System.getProperty("user.dir") + "/output/aes_key_encrypted.bin";
             File envelopeFile = new File(envelopePath);
 
-            //privateKey 서버에 저장 하지 않고 메모리에 있는 것을 사용하기 위해 inputStream만 전달
-            SecretKey aesKey = new EnvelopeDecode().getAESKeyFromEnvelope(privateKey.getInputStream(), envelopeFile);
+            //privateKey 서버에 저장 하지 않고 메모리에 있는 것을 사용하기 위해 inputStream만 전달 privateKey.getInputStream()
+            SecretKey aesKey = new EnvelopeDecode().getAESKeyFromEnvelope(privateKey, envelopeFile);
             AESKeyHolder.getInstance().setAESKey(aesKey);
             return ResponseEntity.ok("개인 키 업로드 성공");
 
