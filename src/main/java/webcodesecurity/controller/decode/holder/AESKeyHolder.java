@@ -36,4 +36,8 @@ public class AESKeyHolder {
     public SecretKey getAESKey() {
         return aesKey;
     }
+
+    public boolean hasAESKey() {
+        return this.aesKey != null;
+    }
 }

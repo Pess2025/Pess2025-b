@@ -7,7 +7,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileDecode { //텍스트 파일 복호화하여 리스트로 전달
+public class FileDecode { //텍스트 파일 복호화하여 리스트로 전달 -> Map 사용을 위함
 
     public List<String> decodeToLines(SecretKey secretKey, File encryptedFile) throws Exception {
 

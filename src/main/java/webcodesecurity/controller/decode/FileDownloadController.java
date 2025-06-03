@@ -14,7 +14,7 @@ public class FileDownloadController {
 
     @GetMapping("/{filename}")
     public ResponseEntity<FileSystemResource> downloadFile(@PathVariable String filename) {
-        File file = new File("uploads/" + filename);
+        File file = new File("output/" + filename);
         if (!file.exists()) {
             return ResponseEntity.notFound().build();
         }
