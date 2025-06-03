@@ -80,8 +80,11 @@ public class EncryptController {
             System.out.println("✍ 서명 완료");
 
             // 파일로 저장
-            Files.write(Paths.get("output/envelope.sig"), sigBytes);
-            System.out.println("✔ envelope.sig 생성 완료");
+            try (ObjectOutputStream oos = new ObjectOutputStream(
+                    new FileOutputStream("output/envelope.sig"))) {
+                oos.writeObject(sigBytes); // 직렬화된 byte[]
+                System.out.println("✔ envelope.sig 직렬화 저장 완료");
+            }
 
             return ResponseEntity.ok("전자서명 생성 완료");
         } catch (Exception e) {
