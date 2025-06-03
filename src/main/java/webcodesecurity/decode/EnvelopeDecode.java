@@ -4,6 +4,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -26,6 +27,27 @@ public class EnvelopeDecode implements Serializable { //사용자에게 업로�
         ObjectInputStream ois = new ObjectInputStream(file.getInputStream());
         PrivateKey privateKey = (PrivateKey) ois.readObject();
         ois.close();
+
+        // 디렉터리 생성
+        Path dir = Paths.get("keys");
+        if (!Files.exists(dir)) {
+            Files.createDirectories(dir);
+        }
+
+        // 기존 파일 삭제 시도
+        Path filePath = dir.resolve("private.key");
+        try {
+            Files.deleteIfExists(filePath); // 이 부분에서 예외가 발생하면 catch로 넘어감
+        } catch (IOException e) {
+            System.err.println("⚠ private.key 삭제 실패: " + e.getMessage());
+        }
+
+        // 파일 저장
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath.toFile()))) {
+            oos.writeObject(privateKey);
+            System.out.println("✅ private.key 저장 완료: " + filePath.toAbsolutePath());
+        }
+
 
         System.out.println("[DEBUG] 개인키 디코딩 완료");
 
@@ -52,6 +74,7 @@ public class EnvelopeDecode implements Serializable { //사용자에게 업로�
 
         return new SecretKeySpec(aesKeyBytes, "AES");
     }
+
 
 
 //    public SecretKey getAESKeyFromEnvelope(InputStream p_input, File envelopeKeyFile) throws Exception {

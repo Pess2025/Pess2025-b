@@ -3,19 +3,33 @@ package webcodesecurity.controller.decode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import webcodesecurity.controller.decode.holder.AESKeyHolder;
+import webcodesecurity.decode.AESKeyStore;
 import webcodesecurity.decode.FileDecode;
 import webcodesecurity.decode.HashValidate;
 
+import javax.crypto.SecretKey;
 import java.io.File;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/verify")
 public class VerifyController {
 
+    @GetMapping("/time")
+    public ResponseEntity<Map<String, String>> getCurrentKSTTime() {
+        String kstTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        return ResponseEntity.ok(Map.of("checkTime", kstTime));
+    }
+
     @GetMapping("/signature")
-    public ResponseEntity<String> verifySignature() {
-        if (AESKeyHolder.getInstance().getAESKey() != null) {
+    public ResponseEntity<String> verifySignature() throws Exception {
+        //output/envelope.sig 가 유효한지 확인하는 코드 작성해줘
+        if (AESKeyStore.loadKey() != null) {
             return ResponseEntity.ok("전자서명 유효함");
         } else {
             return ResponseEntity.status(403).body("전자서명 없음");
@@ -29,18 +43,13 @@ public class VerifyController {
 
             File exHashFile = new File("output/password_hash.txt"); //해시 값
 
-            boolean valid = new HashValidate().validate((AESKeyHolder.getInstance().getAESKey()), txtFile, exHashFile);
+            SecretKey aesKey = AESKeyStore.loadKey();
+            if (aesKey == null) {
+                System.out.println("AESKeyHolder에 키가 존재하지 않음!");
+                throw new IllegalStateException("AES 키가 없습니다.");
+            }
 
-            /*
-            // AES 복호화 → 한 줄씩 List<String>으로 가져옴
-            List<String> lines = new FileDecode().decodeToLines(
-                    AESKeyHolder.getInstance().getAESKey(), txtFile
-            );
-
-            // List<String> → 하나의 문자열로 합침 (줄바꿈 \n으로 했는데 값 다르면 다시 수정 해야)
-            String content = String.join("\n", lines);
-
-            */
+            boolean valid = new HashValidate().validate(aesKey, txtFile, exHashFile);
 
             if (!valid) return ResponseEntity.status(403).body("검증 실패: 파일이 위조 되었습니다,");
             return ResponseEntity.ok("무결성 검증 성공");

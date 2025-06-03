@@ -2,6 +2,7 @@ package webcodesecurity.controller.decode;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import webcodesecurity.decode.AESKeyStore;
 import webcodesecurity.decode.FileDecode;
 import webcodesecurity.controller.decode.holder.AESKeyHolder;
 import webcodesecurity.controller.decode.holder.PasswordMapHolder;
@@ -20,7 +21,7 @@ public class DecryptController {
     public ResponseEntity<String> decryptPasswordFile() {
         try {
             File txtFile = new File("output/password.enc");
-            SecretKey aes = AESKeyHolder.getInstance().getAESKey();
+            SecretKey aes = AESKeyStore.loadKey();
             List<String> lines = new FileDecode().decodeToLines(aes, txtFile);
 
             Map<String, String> passwordMap = new PasswordMapManager().parse(lines);

@@ -38,7 +38,11 @@ public class FileDecode { //텍스트 파일 복호화하여 리스트로 전달
 
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE, secretKey);
-        byte[] decrypted = cipher.doFinal(encryptedBytes); // ✅ 여기서 IllegalBlockSizeException 해결됨
+        System.out.println("암호문 길이(byte): " + encryptedBytes.length);
+        if (encryptedBytes.length % 16 != 0) {
+            System.out.println("⚠️ 암호문 길이가 16의 배수가 아닙니다!");
+        }
+        byte[] decrypted = cipher.doFinal(encryptedBytes);
 
         // 복호화된 결과 → 줄 단위로 split
         List<String> lines = new ArrayList<>();

@@ -7,6 +7,7 @@
 package webcodesecurity.encrypt;
 
 import webcodesecurity.controller.encode.holder.AESKeyHolder;
+import webcodesecurity.decode.AESKeyStore;
 import webcodesecurity.key.SecretKeySaver;
 
 import javax.crypto.*;
@@ -17,7 +18,7 @@ import java.util.Arrays;
 
 public class FileEncrypter {
 
-    public static SecretKey encryptFile(String inputFilePath, String outputFilePath) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+    public static SecretKey encryptFile(String inputFilePath, String outputFilePath) throws Exception {
 
         System.out.println("[DEBUG] FileEncrypter.encryptFile 호출됨");
         System.out.println("[DEBUG] 평문 파일: " + inputFilePath);
@@ -25,7 +26,7 @@ public class FileEncrypter {
 
         //1. AES 대칭키를 만듭니다.
 //        SecretKey secretKey = (SecretKey) SecretKeySaver.generateKey("AES", 128);
-        SecretKey secretKey = AESKeyHolder.getInstance().getAESKey();
+        SecretKey secretKey = AESKeyStore.loadKey();
 
         //2. AES Cipher를 초기화합니다.
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");

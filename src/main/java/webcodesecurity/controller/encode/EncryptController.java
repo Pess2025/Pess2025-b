@@ -69,7 +69,6 @@ public class EncryptController implements Serializable{
             }
 
             // 개인키 로드 자바 직렬화로
-//            PrivateKey privateKey = (PrivateKey) SecretKeyLoader.loadKey("keys/private.key", 2048);
             PrivateKey privateKey;
             try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("keys/private.key"))) {
                 privateKey = (PrivateKey) ois.readObject();

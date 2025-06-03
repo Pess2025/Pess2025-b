@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import webcodesecurity.controller.encode.holder.AESKeyHolder;
+import webcodesecurity.decode.AESKeyStore;
 import webcodesecurity.key.KeyPairManager;
 
 import javax.crypto.SecretKey;
@@ -121,9 +122,10 @@ public class KeyController implements Serializable {
 
             //대칭키를 만들어서 holder에 넣어놓기
             SecretKey aesKey = (SecretKey) SecretKeySaver.generateKey("AES", 256); //수정 해야할스도
-            AESKeyHolder.getInstance().setAESKey(aesKey);
+            //AESKeyHolder.getInstance().setAESKey(aesKey);
+            AESKeyStore.saveKey(aesKey);
 
-            SecretKey aes = AESKeyHolder.getInstance().getAESKey();
+            SecretKey aes = AESKeyStore.loadKey();
 
             // 2. 평문으로 저장 안하고 → 암호화해서 저장 keyBytes = 공개키의 바이트
             if(FileEncrypter.encryptBytes(aes, keyBytes, new File(outputPath)))
@@ -170,7 +172,7 @@ public class KeyController implements Serializable {
     @GetMapping("/aes-key")
     public ResponseEntity<byte[]> getAESKey() {
         try {
-            SecretKey aesKey = AESKeyHolder.getInstance().getAESKey();
+            SecretKey aesKey = AESKeyStore.loadKey();
 
             if (aesKey == null) {
                 return ResponseEntity.status(404).body(null);

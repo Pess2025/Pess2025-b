@@ -12,6 +12,6 @@ public class PasswordController { //키 검색
     public ResponseEntity<String> searchPassword(@RequestParam("key") String key) {
         String value = PasswordMapHolder.getInstance().getPasswordMap().get(key);
         if (value == null) return ResponseEntity.status(404).body("해당 키를 찾을 수 없습니다.");
-        return ResponseEntity.ok("해시된 비밀번호: " + value);
+        return ResponseEntity.ok("비밀번호: " + value);
     }
 }
