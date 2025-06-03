@@ -31,7 +31,8 @@ public class KeyController {
      */
     @PostMapping("/generate")
     public ResponseEntity<byte[]> generatePrivateKey() {
-        KeyPair keyPair = KeyPairManager.generateKeyPair("RSA", 1024);
+        KeyPair keyPair = KeyPairManager.generateKeyPair("RSA", 2048);
+        System.out.println("📏 공개키 바이트 길이: " + keyPair.getPublic().getEncoded().length);
         if (keyPair == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
