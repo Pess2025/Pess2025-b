@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import webcodesecurity.controller.encode.holder.AESKeyHolder;
 import webcodesecurity.key.KeyPairManager;
 
 import javax.crypto.SecretKey;
@@ -20,6 +21,7 @@ import java.security.KeyPair;
 import java.util.Base64;
 
 import webcodesecurity.encrypt.FileEncrypter;
+import webcodesecurity.key.SecretKeySaver;
 
 @RestController
 @RequestMapping("/api/keys")
@@ -29,19 +31,21 @@ public class KeyController {
      * 프론트에서 "새로운 키 생성하기"를 클릭했을 때 호출되는 API
      * RSA 키페어를 생성한 뒤, 개인키를 byte[] 형태로 반환하여 다운로드하게 합니다.
      */
-    @PostMapping("/generate")
+    @GetMapping("/generate/private-key")
     public ResponseEntity<byte[]> generatePrivateKey() {
         KeyPair keyPair = KeyPairManager.generateKeyPair("RSA", 2048);
-        System.out.println("📏 공개키 바이트 길이: " + keyPair.getPublic().getEncoded().length);
         if (keyPair == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+        System.out.println("📏 공개키 바이트 길이: " + keyPair.getPublic().getEncoded().length);
 
         // 공개키 저장 (파일)
         try {
+            //파일을 열어서 publicKeyByte를 "output/public.key"라는 이름으로 저장해야함
+            byte[] publicKeyBytes = keyPair.getPublic().getEncoded();
             Path publicKeyPath = Paths.get("output/public.key");
-            Files.createDirectories(publicKeyPath.getParent()); // 폴더 없으면 생성
-            Files.write(publicKeyPath, keyPair.getPublic().getEncoded());
+            Files.write(publicKeyPath, publicKeyBytes);
+            System.out.println("📂 공개키 저장 완료: " + publicKeyPath.toAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -66,12 +70,7 @@ public class KeyController {
             byte[] keyBytes = file.getBytes();
 
             // 1. 암호화된 결과 저장 경로
-            String outputPath = "output/private.key.enc";
-
-            // 2. 평문으로 저장 안하고 → 암호화해서 저장
-            SecretKey aesKey = FileEncrypter.encryptBytes(keyBytes, new File(outputPath));
-
-            // 3. 평문 키 저장 안함! 전자봉투도 지금은 생성 안 함
+            String outputPath = "output/private.key";
 
             return ResponseEntity.ok("개인키 업로드 및 암호화 완료");
         } catch (Exception e) {
@@ -81,49 +80,52 @@ public class KeyController {
     }
 
     /**
-     * 공개키 업로드 API
+     * 공개키 업로드 API, 사용자가 보낸걸 읽고 저장
      */
     @PostMapping("/upload-public")
     public ResponseEntity<String> uploadPublicKey(@RequestParam("file") MultipartFile file) {
         try {
-            String rootPath = System.getProperty("user.dir"); // 실행 경로
-            File keyDir = new File(rootPath, "keys");
-            if (!keyDir.exists()) keyDir.mkdirs();
+            byte[] keyBytes = file.getBytes();
 
-            File destFile = new File(keyDir, "public.key"); //아마 사용자에게 주는 공개키
-            file.transferTo(destFile);
+            // 1. 암호화된 결과 저장 경로
+            String outputPath = "output/public.key";
 
-            return ResponseEntity.ok("공개키 저장 완료");
+            //대칭키를 만들어서 holder에 넣어놓기
+            SecretKey aesKey = (SecretKey) SecretKeySaver.generateKey("AES", 256);
+            AESKeyHolder.getInstance().setAESKey(aesKey);
+
+            SecretKey aes = AESKeyHolder.getInstance().getAESKey();
+
+            // 2. 평문으로 저장 안하고 → 암호화해서 저장 keyBytes = 공개키의 바이트
+            if(FileEncrypter.encryptBytes(aes, keyBytes, new File(outputPath)))
+                return ResponseEntity.ok("공개키 저장 완료");
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("업로드 실패: " + e.getMessage());
         }
+        return ResponseEntity.status(900).body("예외 발생");
     }
 
     /**
-     * 공개키 읽기 API
+     * 공개키 생성(사실 주는거 아니고 드라이브에 저장 된거 제공하는거임)
      */
-//    @GetMapping("/public-key")
-//    public ResponseEntity<String> getPublicKey() {
-//        try {
-//            // 저장된 공개키 바이너리 불러오기
-//            Path keyPath = Paths.get("src/main/java/webcodesecurity/output/public.key");
-//            byte[] keyBytes = Files.readAllBytes(keyPath);
-//
-//            // Base64로 인코딩 (줄바꿈 포함)
-//            String base64 = Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(keyBytes);
-//
-//            // PEM 문자열 포맷
-//            String pem = "-----BEGIN PUBLIC KEY-----\n" + base64 + "\n-----END PUBLIC KEY-----";
-//
-//            return ResponseEntity.ok()
-//                    .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE)
-//                    .body(pem);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return ResponseEntity.status(500).body(null);
-//        }
-//    }
+    @GetMapping("/generate/public-key")
+    public ResponseEntity<byte[]> getPublicKey() {
+        try {
+            System.out.printf("공개키 아직 안 갔어요");
+            Path keyPath = Paths.get("output/public.key");
+            byte[] keyBytes = Files.readAllBytes(keyPath);
+            System.out.printf("공개키 잘 들고 갔어요");
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                    .body(keyBytes);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
+    }
 
     /**
      * base64 문자열을 일정 길이마다 줄바꿈 처리
@@ -136,31 +138,21 @@ public class KeyController {
         return sb.toString();
     }
 
-    @GetMapping("/public-key-binary")
-    public ResponseEntity<byte[]> getPublicKeyBinary() throws IOException {
+    @GetMapping("/aes-key")
+    public ResponseEntity<byte[]> getAESKey() {
         try {
-            System.out.println("✅ [DEBUG] public-key-binary 진입");
-            
-            // 실행 경로 확인
-            String rootPath = System.getProperty("user.dir");
-            System.out.println("[DEBUG] 현재 실행 경로: " + rootPath);
+            SecretKey aesKey = AESKeyHolder.getInstance().getAESKey();
 
-            Path keyPath = Paths.get(rootPath, "output/public.key");
-            System.out.println("[DEBUG] 공개키 예상 경로: " + keyPath.toAbsolutePath());
-
-            if (!Files.exists(keyPath)) {
-                System.err.println("[ERROR] 공개키 파일이 존재하지 않습니다.");
+            if (aesKey == null) {
                 return ResponseEntity.status(404).body(null);
             }
 
-            Path keyPath1 = Paths.get("output/public.key");
-            byte[] keyBytes = Files.readAllBytes(keyPath1);
-
+            byte[] keyBytes = aesKey.getEncoded();
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=public.key")
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Disposition", "attachment; filename=\"aes.key\"")
                     .body(keyBytes);
-        } catch (IOException e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body(null);
         }

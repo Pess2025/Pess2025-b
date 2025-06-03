@@ -17,7 +17,7 @@ public class PasswordMapManager {
                 passwordMap.put(domain, password); //map에 저장
             }
             else if(spaceIndex == 0){
-                System.out.println("도메인이 비어있습니다.");
+                System.out.println("서비스 명이 비어있습니다.");
             } else if(spaceIndex == line.length() - 1){
                 System.out.println("비밀번호가 비어있습니다.");
             }

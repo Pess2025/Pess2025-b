@@ -56,7 +56,7 @@ public class EncryptController {
 
     /**
      * 저장된 AES 키에 대해 전자서명을 생성
-    */
+     */
 
     @PostMapping("/sign")
     public ResponseEntity<String> generateSignature() {
@@ -80,8 +80,11 @@ public class EncryptController {
             System.out.println("✍ 서명 완료");
 
             // 파일로 저장
-            Files.write(Paths.get("output/envelope.sig"), sigBytes);
-            System.out.println("✔ envelope.sig 생성 완료");
+            try (ObjectOutputStream oos = new ObjectOutputStream(
+                    new FileOutputStream("output/envelope.sig"))) {
+                oos.writeObject(sigBytes); // 직렬화된 byte[]
+                System.out.println("✔ envelope.sig 직렬화 저장 완료");
+            }
 
             return ResponseEntity.ok("전자서명 생성 완료");
         } catch (Exception e) {
@@ -146,7 +149,7 @@ public class EncryptController {
     private void addToZip(java.util.zip.ZipOutputStream zos, File file, String entryName) throws IOException {
         zos.putNextEntry(new java.util.zip.ZipEntry(entryName));
         try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[2048];
             int len;
             while ((len = fis.read(buffer)) != -1) {
                 zos.write(buffer, 0, len);
@@ -162,8 +165,8 @@ public class EncryptController {
                 return ResponseEntity.badRequest().body("📛 업로드된 파일이 null 또는 비어 있음");
             }
 
-            String outputPath = System.getProperty("user.dir") + File.separator + "output";
-            System.out.println("📂 outputPath: " + outputPath);
+            String outputPath = "output";
+            System.out.println("saveHash outputPath: " + outputPath);
 
             File outputDir = new File(outputPath);
             if (!outputDir.exists() && !outputDir.mkdirs()) {

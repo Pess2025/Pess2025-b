@@ -1,4 +1,4 @@
-package webcodesecurity.controller.decode.holder;
+package webcodesecurity.controller.encode.holder;
 
 import javax.crypto.SecretKey;
 import java.io.FileOutputStream;

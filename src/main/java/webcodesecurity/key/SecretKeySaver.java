@@ -26,7 +26,7 @@ public class SecretKeySaver {
 
             byte[] key = secretKey.getEncoded();
             for(byte b : key) {
-                System.out.printf("%02X ", b);
+                System.out.printf("SecretKeySaver: %02X ", b);
             }
             System.out.println();
             return secretKey; // 업캐스팅 일어나.

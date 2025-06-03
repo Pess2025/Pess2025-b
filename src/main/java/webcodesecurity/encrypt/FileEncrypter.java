@@ -6,6 +6,7 @@
  * */
 package webcodesecurity.encrypt;
 
+import webcodesecurity.controller.encode.holder.AESKeyHolder;
 import webcodesecurity.key.SecretKeySaver;
 
 import javax.crypto.*;
@@ -23,7 +24,8 @@ public class FileEncrypter {
         System.out.println("[DEBUG] 암호문 저장 경로: " + new File(outputFilePath).getAbsolutePath());
 
         //1. AES 대칭키를 만듭니다.
-        SecretKey secretKey = (SecretKey) SecretKeySaver.generateKey("AES", 128);
+//        SecretKey secretKey = (SecretKey) SecretKeySaver.generateKey("AES", 128);
+        SecretKey secretKey = AESKeyHolder.getInstance().getAESKey();
 
         //2. AES Cipher를 초기화합니다.
         Cipher cipher = Cipher.getInstance("AES");
@@ -59,21 +61,21 @@ public class FileEncrypter {
         return secretKey;
     }
 
-    public static SecretKey encryptBytes(byte[] input, File outputFile) throws Exception {
-        // 1. 대칭키 생성 (128비트 AES)
-        SecretKey secretKey = (SecretKey) SecretKeySaver.generateKey("AES", 128);
+    public static boolean encryptBytes(SecretKey aes, byte[] input, File outputFile) throws Exception {
 
-        // 2.
         Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        cipher.init(Cipher.ENCRYPT_MODE, aes);
 
-        // 3. 암호화 수행 및 저장
+
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
             byte[] encrypted = cipher.doFinal(input);
             fos.write(encrypted);
+            return true; // 정상 처리 완료 시
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;         // 예외 발생 시 false 반환
         }
 
-        return secretKey;
     }
 
 }
