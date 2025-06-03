@@ -7,6 +7,7 @@ import webcodesecurity.controller.decode.holder.AESKeyHolder;
 import webcodesecurity.controller.decode.holder.PasswordMapHolder;
 import webcodesecurity.decode.PasswordMapManager;
 
+import javax.crypto.SecretKey;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +19,9 @@ public class DecryptController {
     @PostMapping("/password-file")
     public ResponseEntity<String> decryptPasswordFile() {
         try {
-            File txtFile = new File("output/password.txt");
-            List<String> lines = new FileDecode().decodeToLines(AESKeyHolder.getInstance().getAESKey(), txtFile);
+            File txtFile = new File("output/password.enc");
+            SecretKey aes = AESKeyHolder.getInstance().getAESKey();
+            List<String> lines = new FileDecode().decodeToLines(aes, txtFile);
 
             Map<String, String> passwordMap = new PasswordMapManager().parse(lines);
             PasswordMapHolder.getInstance().setPasswordMap(passwordMap);

@@ -28,7 +28,7 @@ public class FileEncrypter {
         SecretKey secretKey = AESKeyHolder.getInstance().getAESKey();
 
         //2. AES Cipher를 초기화합니다.
-        Cipher cipher = Cipher.getInstance("AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 
         //3. 파일을 읽고 암호화 후 저장합니다.
@@ -63,7 +63,7 @@ public class FileEncrypter {
 
     public static boolean encryptBytes(SecretKey aes, byte[] input, File outputFile) throws Exception {
 
-        Cipher cipher = Cipher.getInstance("AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, aes);
 
 

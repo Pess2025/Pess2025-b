@@ -16,10 +16,10 @@ public class CheckFilesController {
     @GetMapping("/check-files")
     public ResponseEntity<Map<String, Boolean>> checkRequiredFiles() {
         Map<String, Boolean> fileStatus = new HashMap<>();
-        fileStatus.put("password.txt", new File("output/password.txt").exists());
+        fileStatus.put("password.txt", new File("output/password.enc").exists());
         fileStatus.put("password_hash.txt", new File("output/password_hash.txt").exists());
-        fileStatus.put("envelope.key", new File("output/envelope.key").exists());
-        fileStatus.put("public.key", new File("output/public.key").exists());
+        fileStatus.put("envelope.key", new File("output/envelope.sig").exists());
+        fileStatus.put("public.key", new File("output/en_public.key").exists());
 
         return ResponseEntity.ok(fileStatus);
     }

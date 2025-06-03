@@ -20,17 +20,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class EnvelopeDecode implements Serializable { //사용자에게 업로드 받은 비밀키로 암호화 된 대칭키를 복호화, 대칭키 획득
     private static final long serialVersionUID = 1L;
-    //MultipartFile privateKeyFile
-    public SecretKey getAESKeyFromEnvelope(MultipartFile file, File envelopeKeyFile) throws Exception {
-        // 1. 개인키 바이너리 읽기 (PKCS#8 형식)
-//        byte[] privateKeyBytes = privateKeyFile.getBytes();
-//        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-//        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-//        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
 
-//        ObjectInputStream o_private = new ObjectInputStream(p_input);
-//		PrivateKey privateKey = (PrivateKey)o_private.readObject();
-//		o_private.close();
+    public SecretKey getAESKeyFromEnvelope(MultipartFile file, File envelopeKeyFile) throws Exception {
 
         ObjectInputStream ois = new ObjectInputStream(file.getInputStream());
         PrivateKey privateKey = (PrivateKey) ois.readObject();
@@ -57,7 +48,6 @@ public class EnvelopeDecode implements Serializable { //사용자에게 업로�
             throw new IOException("AES 키 길이가 32바이트가 아님: " + aesKeyBytes.length);
         }
 
-        //원래 있던 private.key 바이트로 저장 된거니까 직렬화로 저장 되게 변경
         //원래 있던 envelopeKeyFile도 바이트로 저장 된거라 직렬화로 저장 되게 변경
 
         return new SecretKeySpec(aesKeyBytes, "AES");

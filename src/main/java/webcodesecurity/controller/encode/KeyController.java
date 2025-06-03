@@ -120,7 +120,7 @@ public class KeyController implements Serializable {
             String outputPath = "output/en_public.key";
 
             //대칭키를 만들어서 holder에 넣어놓기
-            SecretKey aesKey = (SecretKey) SecretKeySaver.generateKey("AES", 256);
+            SecretKey aesKey = (SecretKey) SecretKeySaver.generateKey("AES", 256); //수정 해야할스도
             AESKeyHolder.getInstance().setAESKey(aesKey);
 
             SecretKey aes = AESKeyHolder.getInstance().getAESKey();

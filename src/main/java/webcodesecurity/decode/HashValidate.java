@@ -21,7 +21,7 @@ public class HashValidate { //기존에 저장 된 해시 파일과 텍스트 �
         byte[] expected = Files.readAllBytes(exHashFile.toPath()); //이전 해시 값
         //byte[] pwText = Files.readAllBytes(textFile.toPath()); // 암호화 된
 
-        Cipher cipher = Cipher.getInstance("AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE, secretKey);
 
 //        MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");

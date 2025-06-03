@@ -25,7 +25,7 @@ public class VerifyController {
     @GetMapping("/integrity")
     public ResponseEntity<String> verifyIntegrity() {
         try {
-            File txtFile = new File("output/password.txt"); //암호화 된 pw파일이라 복호화 필요
+            File txtFile = new File("output/password.enc"); //암호화 된 pw파일이라 복호화 필요
 
             File exHashFile = new File("output/password_hash.txt"); //해시 값
 
