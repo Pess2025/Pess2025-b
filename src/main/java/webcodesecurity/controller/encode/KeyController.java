@@ -38,7 +38,7 @@ public class KeyController {
 
         // 공개키 저장 (파일)
         try {
-            Path publicKeyPath = Paths.get("src/main/java/webcodesecurity/output/public.key");
+            Path publicKeyPath = Paths.get("output/public.key");
             Files.createDirectories(publicKeyPath.getParent()); // 폴더 없으면 생성
             Files.write(publicKeyPath, keyPair.getPublic().getEncoded());
         } catch (IOException e) {
@@ -89,7 +89,7 @@ public class KeyController {
             File keyDir = new File(rootPath, "keys");
             if (!keyDir.exists()) keyDir.mkdirs();
 
-            File destFile = new File(keyDir, "public.key");
+            File destFile = new File(keyDir, "public.key"); //아마 사용자에게 주는 공개키
             file.transferTo(destFile);
 
             return ResponseEntity.ok("공개키 저장 완료");
@@ -102,21 +102,27 @@ public class KeyController {
     /**
      * 공개키 읽기 API
      */
-    @GetMapping("/public-key")
-    public ResponseEntity<byte[]> getPublicKey() {
-        try {
-            Path keyPath = Paths.get("src/main/java/webcodesecurity/output/public.key");
-            byte[] keyBytes = Files.readAllBytes(keyPath);
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
-                    .body(keyBytes);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(null);
-        }
-    }
+//    @GetMapping("/public-key")
+//    public ResponseEntity<String> getPublicKey() {
+//        try {
+//            // 저장된 공개키 바이너리 불러오기
+//            Path keyPath = Paths.get("src/main/java/webcodesecurity/output/public.key");
+//            byte[] keyBytes = Files.readAllBytes(keyPath);
+//
+//            // Base64로 인코딩 (줄바꿈 포함)
+//            String base64 = Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(keyBytes);
+//
+//            // PEM 문자열 포맷
+//            String pem = "-----BEGIN PUBLIC KEY-----\n" + base64 + "\n-----END PUBLIC KEY-----";
+//
+//            return ResponseEntity.ok()
+//                    .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE)
+//                    .body(pem);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(500).body(null);
+//        }
+//    }
 
     /**
      * base64 문자열을 일정 길이마다 줄바꿈 처리
@@ -127,6 +133,36 @@ public class KeyController {
             sb.append(base64, i, Math.min(i + length, base64.length())).append("\n");
         }
         return sb.toString();
+    }
+
+    @GetMapping("/public-key-binary")
+    public ResponseEntity<byte[]> getPublicKeyBinary() throws IOException {
+        try {
+            System.out.println("✅ [DEBUG] public-key-binary 진입");
+            
+            // 실행 경로 확인
+            String rootPath = System.getProperty("user.dir");
+            System.out.println("[DEBUG] 현재 실행 경로: " + rootPath);
+
+            Path keyPath = Paths.get(rootPath, "output", "public.key");
+            System.out.println("[DEBUG] 공개키 예상 경로: " + keyPath.toAbsolutePath());
+
+            if (!Files.exists(keyPath)) {
+                System.err.println("[ERROR] 공개키 파일이 존재하지 않습니다.");
+                return ResponseEntity.status(404).body(null);
+            }
+
+            Path keyPath1 = Paths.get("output/public.key");
+            byte[] keyBytes = Files.readAllBytes(keyPath1);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=public.key")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(keyBytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
 }

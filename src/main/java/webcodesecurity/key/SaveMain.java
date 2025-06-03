@@ -8,6 +8,7 @@ import javax.crypto.SecretKey;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;

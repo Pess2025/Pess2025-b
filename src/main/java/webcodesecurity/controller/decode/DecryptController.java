@@ -18,7 +18,7 @@ public class DecryptController {
     @PostMapping("/password-file")
     public ResponseEntity<String> decryptPasswordFile() {
         try {
-            File txtFile = new File("uploads/password.txt");
+            File txtFile = new File("output/password.txt");
             List<String> lines = new FileDecode().decodeToLines(AESKeyHolder.getInstance().getAESKey(), txtFile);
 
             Map<String, String> passwordMap = new PasswordMapManager().parse(lines);
