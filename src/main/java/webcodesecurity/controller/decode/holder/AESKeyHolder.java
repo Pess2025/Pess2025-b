@@ -4,8 +4,10 @@ import javax.crypto.SecretKey;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
-public class AESKeyHolder {
+public class AESKeyHolder implements Serializable {
+    private static final long serialVersionUID = 1L;
     private static final AESKeyHolder instance = new AESKeyHolder();
     private SecretKey aesKey;
 
@@ -15,7 +17,7 @@ public class AESKeyHolder {
         return instance;
     }
 
-    public void setAESKey(SecretKey key) {
+    public void setAESKey(SecretKey key)  {
         this.aesKey = key;
 
         //나중에 지워야함, 수정 필요

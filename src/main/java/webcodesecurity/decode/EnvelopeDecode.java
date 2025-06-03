@@ -7,22 +7,34 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
+import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Scanner;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.OAEPParameterSpec;
+import javax.crypto.spec.PSource;
 import javax.crypto.spec.SecretKeySpec;
 
-public class EnvelopeDecode { //사용자에게 업로드 받은 비밀키로 암호화 된 대칭키를 복호화, 대칭키 획득
-
-
-    public SecretKey getAESKeyFromEnvelope(MultipartFile privateKeyFile, File envelopeKeyFile) throws Exception {
+public class EnvelopeDecode implements Serializable { //사용자에게 업로드 받은 비밀키로 암호화 된 대칭키를 복호화, 대칭키 획득
+    private static final long serialVersionUID = 1L;
+    //MultipartFile privateKeyFile
+    public SecretKey getAESKeyFromEnvelope(MultipartFile file, File envelopeKeyFile) throws Exception {
         // 1. 개인키 바이너리 읽기 (PKCS#8 형식)
-        byte[] privateKeyBytes = privateKeyFile.getBytes();
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
+//        byte[] privateKeyBytes = privateKeyFile.getBytes();
+//        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
+//        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+//        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
+
+//        ObjectInputStream o_private = new ObjectInputStream(p_input);
+//		PrivateKey privateKey = (PrivateKey)o_private.readObject();
+//		o_private.close();
+
+        ObjectInputStream ois = new ObjectInputStream(file.getInputStream());
+        PrivateKey privateKey = (PrivateKey) ois.readObject();
+        ois.close();
 
         System.out.println("[DEBUG] 개인키 디코딩 완료");
 
@@ -30,9 +42,14 @@ public class EnvelopeDecode { //사용자에게 업로드 받은 비밀키로 �
         byte[] encryptedKeyBytes = Files.readAllBytes(envelopeKeyFile.toPath());
         System.out.println("[DEBUG] 암호화된 AES 키 파일 읽기 완료. 길이: " + encryptedKeyBytes.length);
 
-        // 3. RSA 복호화
-        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+        OAEPParameterSpec oaepParams = new OAEPParameterSpec(
+                "SHA-256",
+                "MGF1",
+                MGF1ParameterSpec.SHA256,
+                PSource.PSpecified.DEFAULT
+        );
+        cipher.init(Cipher.DECRYPT_MODE, privateKey, oaepParams);
         byte[] aesKeyBytes = cipher.doFinal(encryptedKeyBytes);
         System.out.println("[DEBUG] RSA 복호화 완료. AES 키 길이: " + aesKeyBytes.length);
 

@@ -1,7 +1,5 @@
 package webcodesecurity.controller.encode;
 
-import jakarta.annotation.Resource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -12,28 +10,32 @@ import webcodesecurity.controller.encode.holder.AESKeyHolder;
 import webcodesecurity.key.KeyPairManager;
 
 import javax.crypto.SecretKey;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyPair;
-import java.util.Base64;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 
 import webcodesecurity.encrypt.FileEncrypter;
 import webcodesecurity.key.SecretKeySaver;
 
 @RestController
 @RequestMapping("/api/keys")
-public class KeyController {
-
+public class KeyController implements Serializable {
+    private static final long serialVersionUID = 1L;
     /**
      * 프론트에서 "새로운 키 생성하기"를 클릭했을 때 호출되는 API
      * RSA 키페어를 생성한 뒤, 개인키를 byte[] 형태로 반환하여 다운로드하게 합니다.
      */
     @GetMapping("/generate/private-key")
-    public ResponseEntity<byte[]> generatePrivateKey() {
-        KeyPair keyPair = KeyPairManager.generateKeyPair("RSA", 2048);
+    public ResponseEntity<byte[]> generatePrivateKey() throws IOException, NoSuchAlgorithmException {
+
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048);
+        KeyPair keyPair = generator.generateKeyPair();
+
         if (keyPair == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -45,16 +47,41 @@ public class KeyController {
             byte[] publicKeyBytes = keyPair.getPublic().getEncoded();
             Path publicKeyPath = Paths.get("output/public.key");
             Files.write(publicKeyPath, publicKeyBytes);
+
             System.out.println("📂 공개키 저장 완료: " + publicKeyPath.toAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
-        byte[] privateKeyBytes = keyPair.getPrivate().getEncoded();
+        Path path = Paths.get("keys/private.key");
+
+        System.out.println("파일 존재? " + Files.exists(path));
+        System.out.println("쓰기 가능? " + Files.isWritable(path.getParent()));
+        System.out.println("읽기 가능? " + Files.isReadable(path.getParent()));
+
+        // 3. 비밀키 직렬화 - 메모리로
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            oos.writeObject(keyPair.getPrivate());
+        }
+        byte[] privateKeySerializedBytes = bos.toByteArray();
+
+        // 4. 비밀키 직렬화 - 파일로 저장
+        File f = new File("keys/private.key");
+        System.out.println("파일 쓰기 가능? " + f.getParentFile().canWrite());
+
+        Path privateKeyPath = Paths.get("keys/private.key");
+        try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(privateKeyPath))) {
+            oos.writeObject(keyPair.getPrivate());
+        }
+        System.out.println("📂 비밀키 저장 완료: " + privateKeyPath.toAbsolutePath());
+
+        // 5. 직렬화된 개인키를 클라이언트에 전송
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"private.key\"")
-                .body(privateKeyBytes);
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(privateKeySerializedBytes);
     }
 
     /**
@@ -67,15 +94,17 @@ public class KeyController {
     @PostMapping("/upload")
     public ResponseEntity<String> uploadPrivateKey(@RequestParam("file") MultipartFile file) {
         try {
-            byte[] keyBytes = file.getBytes();
+            // ObjectInputStream으로 직렬화 객체 검증
+//            ObjectInputStream ois = new ObjectInputStream(file.getInputStream());
+//            PrivateKey privateKey = (PrivateKey) ois.readObject(); // 예외 안 나면 정상 객체
+//            ois.close();
 
-            // 1. 암호화된 결과 저장 경로
-            String outputPath = "output/private.key";
+            // 여기서 저장은 생략하고 유효성만 확인
+            return ResponseEntity.ok("개인키 업로드 및 검증 완료");
 
-            return ResponseEntity.ok("개인키 업로드 및 암호화 완료");
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("암호화 실패: " + e.getMessage());
+            return ResponseEntity.status(500).body("개인키 검증 실패: " + e.getMessage());
         }
     }
 

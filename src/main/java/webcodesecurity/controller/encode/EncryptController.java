@@ -13,13 +13,15 @@ import webcodesecurity.key.SecretKeyLoader;
 import javax.crypto.Cipher;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Key;
 import java.security.PrivateKey;
 import java.security.Signature;
 
 @RestController
 @RequestMapping("/api/encrypt")
-public class EncryptController {
+public class EncryptController implements Serializable{
 
     /**
      * 클라이언트에서 암호화된 파일과 평문 AES 키를 전달하면,
@@ -66,8 +68,23 @@ public class EncryptController {
                 return ResponseEntity.status(500).body("암호화된 AES 키 없음");
             }
 
-            // 개인키 로드
-            PrivateKey privateKey = (PrivateKey) SecretKeyLoader.loadKey("keys/private.key", 2048);
+            // 개인키 로드 자바 직렬화로
+//            PrivateKey privateKey = (PrivateKey) SecretKeyLoader.loadKey("keys/private.key", 2048);
+            PrivateKey privateKey;
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("keys/private.key"))) {
+                privateKey = (PrivateKey) ois.readObject();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+                return null;
+            }
+            //여기서 개인키 없애게
+            try {
+                Path path = Paths.get("keys/private.key");
+                Files.deleteIfExists(path); // 존재할 경우만 삭제
+                System.out.println("개인키 파일 삭제 완료");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             // 암호화된 AES 키 파일 읽기 (그 자체에 서명할 것!)
             byte[] encryptedKeyBytes = Files.readAllBytes(keyFile.toPath());
