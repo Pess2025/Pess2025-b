@@ -88,7 +88,7 @@ public class KeyController {
             byte[] keyBytes = file.getBytes();
 
             // 1. 암호화된 결과 저장 경로
-            String outputPath = "output/public.key";
+            String outputPath = "output/en_public.key";
 
             //대칭키를 만들어서 holder에 넣어놓기
             SecretKey aesKey = (SecretKey) SecretKeySaver.generateKey("AES", 256);
