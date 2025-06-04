@@ -40,7 +40,7 @@ public class KeyController implements Serializable {
         if (keyPair == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        System.out.println("📏 공개키 바이트 길이: " + keyPair.getPublic().getEncoded().length);
+        System.out.println("공개키 바이트 길이: " + keyPair.getPublic().getEncoded().length);
 
         // 공개키 저장 (파일)
         try {
@@ -49,7 +49,7 @@ public class KeyController implements Serializable {
             Path publicKeyPath = Paths.get("output/public.key");
             Files.write(publicKeyPath, publicKeyBytes);
 
-            System.out.println("📂 공개키 저장 완료: " + publicKeyPath.toAbsolutePath());
+            System.out.println("공개키 저장 완료: " + publicKeyPath.toAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -76,7 +76,7 @@ public class KeyController implements Serializable {
         try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(privateKeyPath))) {
             oos.writeObject(keyPair.getPrivate());
         }
-        System.out.println("📂 비밀키 저장 완료: " + privateKeyPath.toAbsolutePath());
+        System.out.println("비밀키 저장 완료: " + privateKeyPath.toAbsolutePath());
 
         // 5. 직렬화된 개인키를 클라이언트에 전송
         return ResponseEntity.ok()

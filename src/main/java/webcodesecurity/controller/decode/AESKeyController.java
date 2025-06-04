@@ -31,7 +31,7 @@ public class AESKeyController { //비밀키로 대칭키 복호화
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("실패: " + e.getMessage());
+            return ResponseEntity.status(500).body("실패: 암호화 시에 사용한 PrivateKey가 아닙니다.");
         }
     }
 }
