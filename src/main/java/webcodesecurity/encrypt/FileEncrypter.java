@@ -20,19 +20,17 @@ public class FileEncrypter {
 
     public static SecretKey encryptFile(String inputFilePath, String outputFilePath) throws Exception {
 
-        System.out.println("[DEBUG] FileEncrypter.encryptFile 호출됨");
-        System.out.println("[DEBUG] 평문 파일: " + inputFilePath);
-        System.out.println("[DEBUG] 암호문 저장 경로: " + new File(outputFilePath).getAbsolutePath());
+        System.out.println("FileEncrypter.encryptFile 호출됨");
+        System.out.println("평문 파일: " + inputFilePath);
+        System.out.println("암호문 저장 경로: " + new File(outputFilePath).getAbsolutePath());
 
-        //1. AES 대칭키를 만듭니다.
-//        SecretKey secretKey = (SecretKey) SecretKeySaver.generateKey("AES", 128);
+        //AES 대칭키 생성
         SecretKey secretKey = AESKeyStore.loadKey();
 
-        //2. AES Cipher를 초기화합니다.
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 
-        //3. 파일을 읽고 암호화 후 저장합니다.
+        //파일 읽고 암호화 후 저장
         try (FileInputStream fis = new FileInputStream(inputFilePath);
              FileOutputStream fos = new FileOutputStream(outputFilePath)) {
 
@@ -57,7 +55,7 @@ public class FileEncrypter {
             throw new RuntimeException(e);
         } catch (BadPaddingException e) {
             throw new RuntimeException(e);
-        } // 이 부분 catch문을 이렇게 작성하는 게 맞나? 나중에 코드리뷰 때 다시 확인할 것.
+        }
 
         return secretKey;
     }

@@ -26,25 +26,25 @@ public class FileDecode { //텍스트 파일 복호화하여 리스트로 전달
         }
         System.out.println();
 
-        // 암호문 파일 읽기 (Base64 문자열일 경우)
+        // 암호문 파일 읽기
         String base64;
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new FileInputStream(encryptedFile), StandardCharsets.UTF_8))) {
             base64 = reader.lines().reduce("", String::concat).trim();
         }
 
-        // Base64 디코딩 → 실제 암호화된 바이트 배열
+        // 프론트에서 암호화해서 Base64로 디코드 해야함 (암호화 된 바이트 배열)
         byte[] encryptedBytes = Base64.getDecoder().decode(base64);
 
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE, secretKey);
         System.out.println("암호문 길이(byte): " + encryptedBytes.length);
         if (encryptedBytes.length % 16 != 0) {
-            System.out.println("⚠️ 암호문 길이가 16의 배수가 아닙니다!");
+            System.out.println("암호문 길이가 16의 배수가 아닙니다!");
         }
         byte[] decrypted = cipher.doFinal(encryptedBytes);
 
-        // 복호화된 결과 → 줄 단위로 split
+        // 복호화된 결과를 줄 단위로 split
         List<String> lines = new ArrayList<>();
         try (BufferedReader lineReader = new BufferedReader(
                 new InputStreamReader(new ByteArrayInputStream(decrypted), StandardCharsets.UTF_8))) {
@@ -57,21 +57,4 @@ public class FileDecode { //텍스트 파일 복호화하여 리스트로 전달
         return lines;
     }
 
-//        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-//        cipher.init(Cipher.DECRYPT_MODE, secretKey);
-//
-//        List<String> lines = new ArrayList<>();
-//        try (FileInputStream f_input = new FileInputStream(encryptedFile);
-//             CipherInputStream c_input = new CipherInputStream(f_input, cipher);
-//            InputStreamReader i_stream = new InputStreamReader(c_input, StandardCharsets.UTF_8);
-//            BufferedReader reader = new BufferedReader(i_stream)
-//        ) {
-//            String line;
-//            while ((line = reader.readLine()) != null) {
-//                lines.add(line.trim());
-//            }
-//        }
-//
-//        return lines;
-//    }
 }

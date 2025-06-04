@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 
 import webcodesecurity.encrypt.FileEncrypter;
 import webcodesecurity.key.SecretKeySaver;
@@ -95,19 +96,25 @@ public class KeyController implements Serializable {
     @PostMapping("/upload")
     public ResponseEntity<String> uploadPrivateKey(@RequestParam("file") MultipartFile file) {
         try {
-            // ObjectInputStream으로 직렬화 객체 검증
-//            ObjectInputStream ois = new ObjectInputStream(file.getInputStream());
-//            PrivateKey privateKey = (PrivateKey) ois.readObject(); // 예외 안 나면 정상 객체
-//            ois.close();
+            // PrivateKey 객체로 역직렬화
+            try (ObjectInputStream ois = new ObjectInputStream(file.getInputStream())) {
+                Object obj = ois.readObject();
 
-            // 여기서 저장은 생략하고 유효성만 확인
-            return ResponseEntity.ok("개인키 업로드 및 검증 완료");
+                // 실제 PrivateKey인지 확인
+                if (!(obj instanceof PrivateKey)) {
+                    return ResponseEntity.badRequest().body("업로드된 파일에 유효한 PrivateKey 객체가 없습니다.");
+                }
+
+                return ResponseEntity.ok("개인키 업로드 및 검증 완료");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("개인키 검증 실패: " + e.getMessage());
         }
     }
+
+
 
     /**
      * 공개키 업로드 API, 사용자가 보낸걸 읽고 저장
@@ -127,7 +134,7 @@ public class KeyController implements Serializable {
 
             SecretKey aes = AESKeyStore.loadKey();
 
-            // 2. 평문으로 저장 안하고 → 암호화해서 저장 keyBytes = 공개키의 바이트
+            //평문으로 저장 안하고 → 암호화해서 저장 keyBytes = 공개키의 바이트
             if(FileEncrypter.encryptBytes(aes, keyBytes, new File(outputPath)))
                 return ResponseEntity.ok("공개키 저장 완료");
         } catch (Exception e) {
@@ -188,5 +195,6 @@ public class KeyController implements Serializable {
             return ResponseEntity.status(500).body(null);
         }
     }
+
 
 }

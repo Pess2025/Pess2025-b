@@ -45,8 +45,8 @@ public class EncryptController implements Serializable{
             encryptedText.transferTo(encryptedFile);
             encryptedAesKey.transferTo(aesKeyFile);
 
-            System.out.println("📁 암호문 저장 위치: " + encryptedFile.getAbsolutePath());
-            System.out.println("📁 AES 키 저장 위치: " + aesKeyFile.getAbsolutePath());
+            System.out.println("암호문 저장 위치: " + encryptedFile.getAbsolutePath());
+            System.out.println("AES 키 저장 위치: " + aesKeyFile.getAbsolutePath());
 
             return ResponseEntity.ok("AES 암호문 및 키 저장 완료");
 
@@ -178,7 +178,7 @@ public class EncryptController implements Serializable{
     public ResponseEntity<String> saveHash(@RequestParam("hashFile") MultipartFile hashFile) {
         try {
             if (hashFile == null || hashFile.isEmpty()) {
-                return ResponseEntity.badRequest().body("📛 업로드된 파일이 null 또는 비어 있음");
+                return ResponseEntity.badRequest().body("업로드된 파일이 비어 있음");
             }
 
             String outputPath = "output";
@@ -197,7 +197,7 @@ public class EncryptController implements Serializable{
             return ResponseEntity.ok("해시 파일 저장 완료: " + hashFilePath.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("❌ 예외 발생: " + e.getMessage());
+            return ResponseEntity.status(500).body("예외 발생: " + e.getMessage());
         }
     }
 

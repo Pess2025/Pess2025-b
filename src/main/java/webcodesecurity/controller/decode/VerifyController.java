@@ -2,9 +2,7 @@ package webcodesecurity.controller.decode;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import webcodesecurity.controller.decode.holder.AESKeyHolder;
 import webcodesecurity.decode.AESKeyStore;
-import webcodesecurity.decode.FileDecode;
 import webcodesecurity.decode.HashValidate;
 
 import javax.crypto.SecretKey;
@@ -12,7 +10,6 @@ import java.io.File;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,13 +24,14 @@ public class VerifyController {
     }
 
     @GetMapping("/signature")
-    public ResponseEntity<String> verifySignature() throws Exception {
-        //output/envelope.sig 가 유효한지 확인하는 코드 작성해줘
-        if (AESKeyStore.loadKey() != null) {
-            return ResponseEntity.ok("전자서명 유효함");
-        } else {
-            return ResponseEntity.status(403).body("전자서명 없음");
+    public ResponseEntity<String> verifySignature() {
+
+        // 전자서명 파일 존재 여부로 검증
+        File sigFile = new File("output/envelope.sig");
+        if (!sigFile.exists()) {
+            return ResponseEntity.status(403).body("전자서명 파일이 존재하지 않음");
         }
+        return ResponseEntity.ok("전자서명 존재");
     }
 
     @GetMapping("/integrity")
@@ -44,10 +42,6 @@ public class VerifyController {
             File exHashFile = new File("output/password_hash.txt"); //해시 값
 
             SecretKey aesKey = AESKeyStore.loadKey();
-            if (aesKey == null) {
-                System.out.println("AESKeyHolder에 키가 존재하지 않음!");
-                throw new IllegalStateException("AES 키가 없습니다.");
-            }
 
             boolean valid = new HashValidate().validate(aesKey, txtFile, exHashFile);
 

@@ -23,17 +23,18 @@ public class EncryptService {
     public static void process(String inputFilePath, String encryptedOutputPath,
                                String publicKeyPath, String envelopeOutputPath) throws Exception {
 
-        System.out.println("[DEBUG] EncryptService 시작");
-        System.out.println("[DEBUG] 입력 파일 경로: " + inputFilePath);
-        System.out.println("[DEBUG] 암호문 저장 경로: " + encryptedOutputPath);
-        System.out.println("[DEBUG] 공개키 경로: " + publicKeyPath);
-        System.out.println("[DEBUG] 전자봉투 저장 경로: " + envelopeOutputPath);
+        System.out.println(" EncryptService 시작");
+        System.out.println("입력 파일 경로: " + inputFilePath);
+        System.out.println("암호문 저장 경로: " + encryptedOutputPath);
+        System.out.println("공개키 경로: " + publicKeyPath);
+        System.out.println("전자봉투 저장 경로: " + envelopeOutputPath);
 
-        // 1. 파일 암호화(AES 대칭키) 하고 대칭키 return.
+        //파일 암호화(AES 대칭키) 하고 대칭키 return
         SecretKey secretKey = FileEncrypter.encryptFile(inputFilePath, encryptedOutputPath);
 
-        // 2. 전자봉투 생성 (대칭키->공개키로 암호화)
+        //전자봉투 생성 (대칭키->공개키로 암호화)
         EnvelopeGenerator.createEnvelopeFile(secretKey, publicKeyPath, envelopeOutputPath);
+
     }
 }
 
